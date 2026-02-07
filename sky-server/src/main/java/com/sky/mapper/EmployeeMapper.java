@@ -2,6 +2,7 @@ package com.sky.mapper;
 
 import com.github.pagehelper.Page;
 import com.sky.entity.Employee;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -46,4 +47,11 @@ public interface EmployeeMapper {
      */
     @Select("select * from employee where id = #{id}")
     Employee selectById(Long id);
+
+    /**
+     * 根据 id 删除分类
+     * @param id
+     */
+    @Delete("delete from employee where id = #{id}")
+    void delete(Long id);
 }

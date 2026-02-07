@@ -156,4 +156,16 @@ public class EmployeeController {
         employeeService.update(employeeDTO);
         return Result.success();
     }
+
+    /**
+     * 根据id删除分类
+     * @param id
+     * @return
+     */
+    @DeleteMapping
+    @ApiOperation("根据id删除分类")
+    public Result delete(Long id) {
+        employeeService.delete(id);
+        return Result.success();
+    }
 }

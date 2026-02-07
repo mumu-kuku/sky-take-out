@@ -35,13 +35,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler
     public Result exceptionHandler(SQLIntegrityConstraintViolationException ex) {
         String message = ex.getMessage();
-        // 判断当前异常信息，判断是否为用户名重复
+        // 判断当前异常信息，判断是否为唯一字段重复
         if (message.contains("Duplicate entry")) {
             // Duplicate entry 'username' for key 'employee.idx_username'
             String[] split = message.split(" ");
-            String username = split[2];
-            // 返回用户名重复的错误信息
-            return Result.error(username + MessageConstant.ALREADY_EXISTS);
+            String duplicateValue = split[2];
+            // 返回该唯一字段值重复的错误信息
+            return Result.error(duplicateValue + MessageConstant.ALREADY_EXISTS);
         } else {
             // 返回未知错误
             return Result.error(MessageConstant.UNKNOWN_ERROR);

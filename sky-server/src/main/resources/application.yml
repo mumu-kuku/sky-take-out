@@ -6,6 +6,12 @@ spring:
     active: dev
   main:
     allow-circular-references: true
+  # 新增：文件上传大小限制配置
+  servlet:
+     multipart:
+       max-file-size: 10MB        # 单个文件最大大小（可根据需求调整，比如50MB）
+       max-request-size: 100MB    # 单次请求的总文件大小（需大于等于max-file-size）
+       enabled: true              # 开启文件上传功能（默认开启，显式配置更清晰）
   datasource:
     druid:
       driver-class-name: ${sky.datasource.driver-class-name}

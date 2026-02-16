@@ -7,13 +7,18 @@ import com.aliyun.oss.OSSException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
+
 import java.io.ByteArrayInputStream;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @Slf4j
 public class AliOssUtil {
-
     private String endpoint;
     private String accessKeyId;
     private String accessKeySecret;
@@ -23,10 +28,12 @@ public class AliOssUtil {
      * 文件上传
      *
      * @param bytes
-     * @param objectName
+     * @param fileName
      * @return
      */
-    public String upload(byte[] bytes, String objectName) {
+    public String upload(byte[] bytes, String fileName) {
+
+        String objectName = UUID.randomUUID() + fileName.substring(fileName.lastIndexOf("."));
 
         // 创建OSSClient实例。
         OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);

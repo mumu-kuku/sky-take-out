@@ -53,8 +53,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         //密码比对
         // 使用 md5  加密比对
         String md5String = DigestUtils.md5DigestAsHex(password.getBytes());
-        System.out.println(md5String);
-        System.out.println(employee.getPassword());
         if (!employee.getPassword().equals(md5String)) {
             //密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
@@ -120,8 +118,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = Employee.builder()
                 .id(id)
                 .status(status)
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
+//                .updateTime(LocalDateTime.now())
+//                .updateUser(BaseContext.getCurrentId())
                 .build();
         employeeMapper.update(employee);
     }
@@ -144,12 +142,15 @@ public class EmployeeServiceImpl implements EmployeeService {
      */
     @Override
     public void editPassword(PasswordEditDTO passwordEditDTO) {
+        System.out.println(passwordEditDTO);
         Long empId = passwordEditDTO.getEmpId();
         String oldPassword = passwordEditDTO.getOldPassword();
         String newPassword = passwordEditDTO.getNewPassword();
         Employee employee = employeeMapper.selectById(empId);
-        if (!DigestUtils.md5DigestAsHex(oldPassword.getBytes()).equals(employee.getPassword())) {
-            throw new PasswordErrorException("原密码输入错误");
+        String md5String = DigestUtils.md5DigestAsHex(oldPassword.getBytes());
+        if (!employee.getPassword().equals(md5String)) {
+            //密码错误
+            throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
         if (oldPassword.equals(newPassword)) {
             throw new PasswordEditFailedException("新密码不能与旧密码一样");

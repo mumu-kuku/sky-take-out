@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+// 配置类，用于初始化阿里云OSS工具类
 @Configuration
 @Slf4j
 public class OssConfiguration {

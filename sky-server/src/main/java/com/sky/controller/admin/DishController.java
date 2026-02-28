@@ -11,9 +11,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/admin/dish")
@@ -22,6 +25,8 @@ import java.util.List;
 public class DishController {
     @Autowired
     DishService dishService;
+    @Autowired
+    RedisTemplate redisTemplate;
 
     /**
      * 新增菜品
@@ -83,9 +88,16 @@ public class DishController {
      */
     @PutMapping
     @ApiOperation("修改菜品")
+    @CacheEvict(cacheNames = "setmealCache", key = "#dishDTO.categoryId")
     public Result update(@RequestBody DishDTO dishDTO) {
         log.info("正在修改id为{}的菜品", dishDTO.getId());
         dishService.update(dishDTO);
+
+        // 修改菜品需要同步清理菜品缓存，保证时效性
+        String key = "dish_" + dishDTO.getCategoryId();
+        redisTemplate.delete(key);
+        log.info("已删除菜品缓存:{}", key);
+
         return Result.success();
     }
 
@@ -96,9 +108,15 @@ public class DishController {
      * @return
      */
     @PostMapping("/status/{status}")
+    @CacheEvict(cacheNames = "setmealCache", allEntries = true)
     public Result startOrStop(Long id,  @PathVariable Integer status) {
         log.info("正在根据 id:{} 启售/停售菜品", id);
         dishService.startOrStop(id, status);
+
+        // 停售启售菜品需要同步清理菜品缓存，保证时效性
+        Set keys = redisTemplate.keys("dish_*");
+        redisTemplate.delete(keys);
+        log.info("已删除菜品缓存:{}", keys);
         return Result.success();
     }
 

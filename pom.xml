@@ -18,7 +18,6 @@
         <module>sky-server</module>
     </modules>
     <properties>
-        <aliyun.sdk.oss>3.10.2</aliyun.sdk.oss>
         <mybatis.spring>2.2.0</mybatis.spring>
         <lombok>1.18.20</lombok>
         <fastjson>1.2.76</fastjson>
@@ -31,12 +30,14 @@
         <jjwt>0.9.1</jjwt>
         <jaxb-api>2.3.1</jaxb-api>
         <poi>3.16</poi>
+        <redis>2.7.3</redis>
     </properties>
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-redis</artifactId>
+                <version>${redis}</version>
             </dependency>
             <dependency>
                 <groupId>com.aliyun.oss</groupId>

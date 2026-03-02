@@ -1,6 +1,7 @@
 package com.sky.mapper;
 
 import com.github.pagehelper.Page;
+import com.sky.dto.GoodsSalesDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
@@ -8,6 +9,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper {
@@ -31,14 +34,6 @@ public interface OrderMapper {
     void update(Orders orders);
 
     /**
-     * 用于替换微信支付更新数据库状态的问题
-     * @param orderStatus
-     * @param orderPaidStatus
-     */
-    @Update("update orders set status = #{orderStatus},pay_status = #{orderPaidStatus} ,checkout_time = #{check_out_time} where id = #{id}")
-    void updateStatus(Integer orderStatus, Integer orderPaidStatus, LocalDateTime check_out_time, Long id);
-
-    /**
      * 条件查询
      * @param orders
      * @return
@@ -55,4 +50,13 @@ public interface OrderMapper {
 
     @Select("select count(id) from orders where status = #{status}")
     Integer countStatus(Integer status);
+
+    @Select("select * from orders where status = #{status} and order_time < #{timeoutTime}")
+    List<Orders> getByStatusAndOrderTimeBefore(Integer status, LocalDateTime timeoutTime);
+
+    List<GoodsSalesDTO> getSalesTop10(LocalDateTime beginTime, LocalDateTime endTime);
+
+    Double getSumByMap(Map<String, Object> map);
+
+    Integer getCountByMap(Map<String, Object> map);
 }

@@ -15,11 +15,14 @@ import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
+import com.sky.socket.WebSocketServer;
 import com.sky.utils.HttpClientUtil;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class OrderServiceImpl implements OrderService {
     @Autowired
     OrderMapper orderMapper;
@@ -42,6 +46,8 @@ public class OrderServiceImpl implements OrderService {
     AddressBookMapper addressBookMapper;
     @Autowired
     ShoppingCartMapper shoppingCartMapper;
+    @Autowired
+    WebSocketServer webSocketServer;
 //    @Autowired
 //    private WeChatPayUtil weChatPayUtil;
     @Autowired
@@ -184,10 +190,9 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     public OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) throws Exception {
-        // 当前登录用户id
-        Long userId = BaseContext.getCurrentId();
-        User user = userMapper.getById(userId);
-
+//        // 当前登录用户id
+//        Long userId = BaseContext.getCurrentId();
+//        User user = userMapper.getById(userId);
 //        //调用微信支付接口，生成预支付交易单
 //        JSONObject jsonObject = weChatPayUtil.pay(
 //                ordersPaymentDTO.getOrderNumber(), //商户订单号
@@ -199,18 +204,17 @@ public class OrderServiceImpl implements OrderService {
 //        if (jsonObject.getString("code") != null && jsonObject.getString("code").equals("ORDERPAID")) {
 //            throw new OrderBusinessException("该订单已支付");
 //        }
+        // 跳过微信支付
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("code","ORDERPAID");
         OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
-        vo.setPackageStr(jsonObject.getString("package"));
+        jsonObject.put("code", "SUCCESS"); // 模拟支付成功
+        jsonObject.put("package", "prepay_id=wx2026022822585608b8d298891234567890");
+        jsonObject.put("paySign", "xxx"); // 模拟签名
+        jsonObject.put("timeStamp", "1740704000"); // 模拟时间戳
+        jsonObject.put("nonceStr", "abc123"); // 模拟随机字符串
 
-        //为替代微信支付成功后的数据库订单状态更新，多定义一个方法进行修改
-        Long orderid = orderMapper.getByNumber(ordersPaymentDTO.getOrderNumber()).getId();
-        Integer OrderPaidStatus = Orders.PAID; //支付状态，已支付
-        Integer OrderStatus = Orders.TO_BE_CONFIRMED;  //订单状态，待接单
-        //发现没有将支付时间 check_out属性赋值，所以在这里更新
-        LocalDateTime check_out_time = LocalDateTime.now();
-        orderMapper.updateStatus(OrderStatus, OrderPaidStatus, check_out_time, orderid);
+        paySuccess(ordersPaymentDTO.getOrderNumber());
 
         return vo;
     }
@@ -233,6 +237,18 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
+        // 发送消息到 WebSocket 服务器，提醒商家有新订单
+        // type: 1 提交订单  2 催单
+        // orderId: 订单id
+        // content: 提醒信息
+        log.info("发送消息到 WebSocket 服务器，提醒商家有新订单，订单id：{}", orders.getId());
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", 1);
+        message.put("orderId", orders.getId());
+        message.put("content", "订单号：" + outTradeNo);
+        String messageJsonString = JSON.toJSONString(message);
+        webSocketServer.sendToAllClient(messageJsonString);
     }
 
     /**
@@ -481,6 +497,32 @@ public class OrderServiceImpl implements OrderService {
         // 修改订单为已完成状态并更新数据库
         orders.setStatus(Orders.COMPLETED);
         orderMapper.update(orders);
+    }
+
+    /**
+     * 催单
+     * @param id
+     */
+    @Override
+    public void reminder(Long id) {
+        Orders orders = getOrders(id);
+        // 订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
+        // 只有待接单可以催单
+        Integer status = orders.getStatus();
+        if (!status.equals(Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        // 发送消息到 WebSocket 服务器，提醒商家用户催单了
+        // type: 1 提交订单  2 催单
+        // orderId: 订单id
+        // content: 提醒信息
+        log.info("发送消息到 WebSocket 服务器，提醒商家用户催单了，订单id：{}", id);
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", 2);
+        message.put("orderId", id);
+        message.put("content", "订单号：" + orders.getNumber());
+        String messageJsonString = JSON.toJSONString(message);
+        webSocketServer.sendToAllClient(messageJsonString);
     }
 
     private Orders getOrders(Long id) {

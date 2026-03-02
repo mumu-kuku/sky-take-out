@@ -153,7 +153,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
         if (oldPassword.equals(newPassword)) {
-            throw new PasswordEditFailedException("新密码不能与旧密码一样");
+            throw new PasswordEditFailedException(MessageConstant.PASSWORD_EDIT_FAILED);
         }
 
         Employee e = new Employee();

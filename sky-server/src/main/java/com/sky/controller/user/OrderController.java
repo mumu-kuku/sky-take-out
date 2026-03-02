@@ -102,4 +102,17 @@ public class OrderController {
         orderService.repetition(id);
         return Result.success();
     }
+
+    /**
+     * 催单
+     * @param
+     * @return
+     */
+    @GetMapping("/reminder/{id}")
+    @ApiOperation("催单")
+    public Result rejection(@PathVariable Long id)  {
+        log.info("订单id为{}的订单催单了", id);
+        orderService.reminder(id);
+        return Result.success();
+    }
 }

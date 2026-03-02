@@ -24,4 +24,6 @@ public class MessageConstant {
     public static final String ORDER_STATUS_ERROR = "订单状态错误";
     public static final String ORDER_NOT_FOUND = "订单不存在";
     public static final String ALREADY_EXISTS = "已存在";
+    public static final String DATE_ERROR = "日期错误";
+    public static final String EXPORT_EXCEL_ERROR = "导出数据为excel报表失败";
 }
